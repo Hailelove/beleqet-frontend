@@ -23,17 +23,50 @@ export default function JobsListing({ initialJobs, categories }: Props) {
   const [category, setCategory] = useState(searchParams.get("category") ?? "");
   const [type, setType] = useState<string>("");
 
+  // const filtered = useMemo(() => {
+  //   return initialJobs.filter((job) => {
+  //     const matchesQuery =
+  //       !query ||
+  //       job.title.toLowerCase().includes(query.toLowerCase()) ||
+  //       job.company.toLowerCase().includes(query.toLowerCase());
+  //     const matchesLocation =
+  //       !location ||
+  //       job.location.toLowerCase().includes(location.toLowerCase());
+  //     const matchesCategory = !category || job.category === category;
+  //     const matchesType = !type || job.type === type;
+  //     return matchesQuery && matchesLocation && matchesCategory && matchesType;
+  //   });
+  // }, [initialJobs, query, location, category, type]);
   const filtered = useMemo(() => {
-    return initialJobs.filter((job) => {
+    return initialJobs.filter((job: any) => {
+      // 1. Safely extract the company name whether it's an object from the API or a string
+      const companyName =
+        typeof job.company === "object"
+          ? job.company?.name
+          : job.company || job.companyName || "";
+
+      // Match query against title and company name
       const matchesQuery =
         !query ||
-        job.title.toLowerCase().includes(query.toLowerCase()) ||
-        job.company.toLowerCase().includes(query.toLowerCase());
+        job.title?.toLowerCase().includes(query.toLowerCase()) ||
+        companyName?.toLowerCase().includes(query.toLowerCase());
+
+      // 2. Match location safely
       const matchesLocation =
         !location ||
-        job.location.toLowerCase().includes(location.toLowerCase());
-      const matchesCategory = !category || job.category === category;
-      const matchesType = !type || job.type === type;
+        job.location?.toLowerCase().includes(location.toLowerCase());
+
+      // 3. Match Category (compare the UI category ID to the database categoryId)
+      const jobCategoryId = job.categoryId || job.category?.id || job.category;
+      const matchesCategory = !category || jobCategoryId === category;
+
+      // 4. Match Job Type (Convert UI "Full Time" -> DB "FULL_TIME")
+      const formattedFilterType = type
+        ? type.toUpperCase().replace(" ", "_")
+        : "";
+      const matchesType = !type || job.type === formattedFilterType;
+
+      // Return true only if all active filters match
       return matchesQuery && matchesLocation && matchesCategory && matchesType;
     });
   }, [initialJobs, query, location, category, type]);
