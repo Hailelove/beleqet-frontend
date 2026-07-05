@@ -1,14 +1,89 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL
-  ? `${process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, "")}/api/v1`
+// const envUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
+
+// const API_BASE = envUrl
+//   ? envUrl.endsWith("/api/v1")
+//     ? envUrl
+//     : `${envUrl}/api/v1`
+//   : "http://127.0.0.1:4000/api/v1";
+
+// export type ApiJob = {
+//   id: string;
+//   title: string;
+//   description: string;
+//   requirements: string; // plain string, e.g. "React, TypeScript, 3+ years experience and the like"
+//   location: string;
+//   type: "FULL_TIME" | "PART_TIME" | "REMOTE" | "HYBRID" | "CONTRACT";
+//   salaryMin?: number | null;
+//   salaryMax?: number | null;
+//   categoryId: string;
+//   category?: { id: string; slug: string; label: string; icon: string };
+//   company?: { id: string; name: string; logoUrl?: string | null };
+//   companyName?: string | null;
+//   createdAt: string;
+// };
+
+// export type ApiCategory = {
+//   id: string;
+//   slug: string;
+//   label: string;
+//   icon: string;
+//   count?: number;
+// };
+
+// export async function fetchJobs(params?: {
+//   q?: string;
+//   category?: string;
+//   location?: string;
+//   type?: string;
+//   page?: number;
+//   limit?: number;
+// }) {
+//   const qs = new URLSearchParams();
+//   if (params?.q) qs.set("q", params.q);
+//   if (params?.category) qs.set("category", params.category);
+//   if (params?.location) qs.set("location", params.location);
+//   if (params?.type) qs.set("type", params.type);
+//   if (params?.page) qs.set("page", String(params.page));
+//   if (params?.limit) qs.set("limit", String(params.limit));
+
+//   const res = await fetch(`${API_BASE}/jobs?${qs.toString()}`, {
+//     cache: "no-store",
+//   });
+//   if (!res.ok) throw new Error(`Failed to fetch jobs: ${res.status}`);
+//   const json = await res.json();
+//   return { data: json.items as ApiJob[], total: json.total as number };
+// }
+
+// export async function fetchJobById(id: string) {
+//   const res = await fetch(`${API_BASE}/jobs/${id}`, { cache: "no-store" });
+//   if (!res.ok) return null;
+//   return res.json() as Promise<ApiJob>;
+// }
+
+// export async function fetchCategories() {
+//   const res = await fetch(`${API_BASE}/jobs/categories`, {
+//     cache: "no-store",
+//   }).catch(() => null);
+//   if (!res || !res.ok) return [];
+//   return res.json() as Promise<ApiCategory[]>;
+// }
+// 1. Safely handle the API URL so it doesn't duplicate "/api/v1" if you already included it in your .env
+const envUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
+const API_BASE = envUrl
+  ? envUrl.endsWith("/api/v1")
+    ? envUrl
+    : `${envUrl}/api/v1`
   : "http://127.0.0.1:4000/api/v1";
 
 export type ApiJob = {
   id: string;
   title: string;
   description: string;
-  requirements: string; // plain string, e.g. "React, TypeScript, 3+ years experience and the like"
+  // Updated to reflect that your DB seed might return this as an array
+  requirements: string | string[];
   location: string;
-  type: "FULL_TIME" | "PART_TIME" | "REMOTE" | "HYBRID" | "CONTRACT";
+  type?: "FULL_TIME" | "PART_TIME" | "REMOTE" | "HYBRID" | "CONTRACT";
+  jobType?: "FULL_TIME" | "PART_TIME" | "REMOTE" | "HYBRID" | "CONTRACT";
   salaryMin?: number | null;
   salaryMax?: number | null;
   categoryId: string;
@@ -42,24 +117,51 @@ export async function fetchJobs(params?: {
   if (params?.page) qs.set("page", String(params.page));
   if (params?.limit) qs.set("limit", String(params.limit));
 
-  const res = await fetch(`${API_BASE}/jobs?${qs.toString()}`, {
-    cache: "no-store",
-  });
-  if (!res.ok) throw new Error(`Failed to fetch jobs: ${res.status}`);
-  const json = await res.json();
-  return { data: json.items as ApiJob[], total: json.total as number };
+  try {
+    const res = await fetch(`${API_BASE}/jobs?${qs.toString()}`, {
+      cache: "no-store",
+    });
+
+    // 2. Instead of throwing an error that crashes Next.js, return an empty state
+    if (!res.ok) {
+      console.error(
+        `Backend returned an error: ${res.status} ${res.statusText}`,
+      );
+      return { data: [], total: 0 };
+    }
+
+    const json = await res.json();
+    return {
+      data: (json.items || []) as ApiJob[],
+      total: (json.total || 0) as number,
+    };
+  } catch (error) {
+    // 3. Catch total network failures (e.g., backend is offline)
+    console.error("Network or fetch error in fetchJobs:", error);
+    return { data: [], total: 0 };
+  }
 }
 
 export async function fetchJobById(id: string) {
-  const res = await fetch(`${API_BASE}/jobs/${id}`, { cache: "no-store" });
-  if (!res.ok) return null;
-  return res.json() as Promise<ApiJob>;
+  try {
+    const res = await fetch(`${API_BASE}/jobs/${id}`, { cache: "no-store" });
+    if (!res.ok) return null;
+    return (await res.json()) as ApiJob;
+  } catch (error) {
+    console.error(`Error fetching job ${id}:`, error);
+    return null;
+  }
 }
 
 export async function fetchCategories() {
-  const res = await fetch(`${API_BASE}/jobs/categories`, {
-    cache: "no-store",
-  }).catch(() => null);
-  if (!res || !res.ok) return [];
-  return res.json() as Promise<ApiCategory[]>;
+  try {
+    const res = await fetch(`${API_BASE}/jobs/categories`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    return (await res.json()) as ApiCategory[];
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    return [];
+  }
 }

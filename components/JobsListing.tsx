@@ -1,16 +1,210 @@
+// "use client";
+
+// import { useMemo, useState } from "react";
+// import { useSearchParams } from "next/navigation";
+// import { Search, MapPin, SlidersHorizontal } from "lucide-react";
+// import JobCard from "@/components/JobCard";
+// import type { Job } from "@/lib/mockData";
+// import type { ApiCategory } from "@/lib/api";
+
+// // backend currently supports/Expect these 5 job types (no ON_SITE)
+// const jobTypes = ["Full Time", "Part Time", "Remote", "Hybrid", "Contract"];
+
+// type Props = {
+//   initialJobs: Job[];
+//   categories: ApiCategory[];
+// };
+
+// export default function JobsListing({ initialJobs, categories }: Props) {
+//   const searchParams = useSearchParams();
+
+//   const [query, setQuery] = useState(searchParams.get("q") ?? "");
+//   const [location, setLocation] = useState(searchParams.get("loc") ?? "");
+//   const [category, setCategory] = useState(searchParams.get("category") ?? "");
+//   const [type, setType] = useState<string>("");
+
+//   // const filtered = useMemo(() => {
+//   //   return initialJobs.filter((job) => {
+//   //     const matchesQuery =
+//   //       !query ||
+//   //       job.title.toLowerCase().includes(query.toLowerCase()) ||
+//   //       job.company.toLowerCase().includes(query.toLowerCase());
+//   //     const matchesLocation =
+//   //       !location ||
+//   //       job.location.toLowerCase().includes(location.toLowerCase());
+//   //     const matchesCategory = !category || job.category === category;
+//   //     const matchesType = !type || job.type === type;
+//   //     return matchesQuery && matchesLocation && matchesCategory && matchesType;
+//   //   });
+//   // }, [initialJobs, query, location, category, type]);
+//   const filtered = useMemo(() => {
+//     return initialJobs.filter((job: any) => {
+//       // 1. Safely extract the company name whether it's an object from the API or a string
+//       const companyName =
+//         typeof job.company === "object"
+//           ? job.company?.name
+//           : job.company || job.companyName || "";
+
+//       // Match query against title and company name
+//       const matchesQuery =
+//         !query ||
+//         job.title?.toLowerCase().includes(query.toLowerCase()) ||
+//         companyName?.toLowerCase().includes(query.toLowerCase());
+
+//       // 2. Match location safely
+//       const matchesLocation =
+//         !location ||
+//         job.location?.toLowerCase().includes(location.toLowerCase());
+
+//       // 3. Match Category (compare the UI category ID to the database categoryId)
+//       const jobCategoryId = job.categoryId || job.category?.id || job.category;
+//       const matchesCategory = !category || jobCategoryId === category;
+
+//       // 4. Match Job Type (Convert UI "Full Time" -> DB "FULL_TIME")
+//       const formattedFilterType = type
+//         ? type.toUpperCase().replace(" ", "_")
+//         : "";
+//       const matchesType = !type || job.type === formattedFilterType;
+
+//       // Return true only if all active filters match
+//       return matchesQuery && matchesLocation && matchesCategory && matchesType;
+//     });
+//   }, [initialJobs, query, location, category, type]);
+
+//   return (
+//     <div className="container-page py-10">
+//       <div className="mb-6">
+//         <h1 className="text-pageH1">
+//           Search verified jobs from trusted employers.
+//         </h1>
+//         <p className="text-muted text-sm mt-2">{filtered.length} jobs found</p>
+//       </div>
+
+//       <div className="bg-white rounded-2xl border border-border p-2 flex flex-col sm:flex-row gap-2 mb-8">
+//         <div className="flex items-center flex-1 gap-2 px-3 py-2.5 rounded-xl">
+//           <Search className="h-4 w-4 text-muted shrink-0" />
+//           <input
+//             value={query}
+//             onChange={(e) => setQuery(e.target.value)}
+//             placeholder="Job title, keyword or company"
+//             className="w-full text-sm text-ink placeholder:text-muted outline-none"
+//           />
+//         </div>
+//         <div className="hidden sm:block w-px bg-border my-1" />
+//         <div className="flex items-center flex-1 gap-2 px-3 py-2.5 rounded-xl">
+//           <MapPin className="h-4 w-4 text-muted shrink-0" />
+//           <input
+//             value={location}
+//             onChange={(e) => setLocation(e.target.value)}
+//             placeholder="Location"
+//             className="w-full text-sm text-ink placeholder:text-muted outline-none"
+//           />
+//         </div>
+//       </div>
+
+//       <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-8">
+//         <aside className="space-y-6">
+//           <div className="rounded-xl border border-border bg-white p-5">
+//             <h3 className="flex items-center gap-2 text-sm font-semibold text-ink mb-4">
+//               <SlidersHorizontal className="h-4 w-4" /> Category
+//             </h3>
+//             <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+//               <button
+//                 onClick={() => setCategory("")}
+//                 className={`block w-full text-left text-sm px-3 py-2 rounded-lg transition-colors ${
+//                   category === ""
+//                     ? "bg-brandGreen/10 text-brandGreen font-semibold"
+//                     : "text-muted hover:bg-pageBg"
+//                 }`}
+//               >
+//                 All Categories
+//               </button>
+//               {categories.map((cat) => (
+//                 <button
+//                   key={cat.id}
+//                   onClick={() => setCategory(cat.id)}
+//                   className={`flex w-full items-center justify-between text-left text-sm px-3 py-2 rounded-lg transition-colors ${
+//                     category === cat.id
+//                       ? "bg-brandGreen/10 text-brandGreen font-semibold"
+//                       : "text-muted hover:bg-pageBg"
+//                   }`}
+//                 >
+//                   <span>{cat.label}</span>
+//                   {typeof cat.count === "number" && (
+//                     <span className="text-xs">{cat.count}</span>
+//                   )}
+//                 </button>
+//               ))}
+//             </div>
+//           </div>
+
+//           <div className="rounded-xl border border-border bg-white p-5">
+//             <h3 className="text-sm font-semibold text-ink mb-4">Job Type</h3>
+//             <div className="space-y-2">
+//               <button
+//                 onClick={() => setType("")}
+//                 className={`block w-full text-left text-sm px-3 py-2 rounded-lg transition-colors ${
+//                   type === ""
+//                     ? "bg-brandGreen/10 text-brandGreen font-semibold"
+//                     : "text-muted hover:bg-pageBg"
+//                 }`}
+//               >
+//                 All Types
+//               </button>
+//               {jobTypes.map((t) => (
+//                 <button
+//                   key={t}
+//                   onClick={() => setType(t)}
+//                   className={`block w-full text-left text-sm px-3 py-2 rounded-lg transition-colors ${
+//                     type === t
+//                       ? "bg-brandGreen/10 text-brandGreen font-semibold"
+//                       : "text-muted hover:bg-pageBg"
+//                   }`}
+//                 >
+//                   {t}
+//                 </button>
+//               ))}
+//             </div>
+//           </div>
+//         </aside>
+
+//         <div>
+//           {filtered.length === 0 ? (
+//             <div className="rounded-xl border border-dashed border-border bg-white p-12 text-center">
+//               <p className="text-ink font-semibold">
+//                 No jobs match your filters
+//               </p>
+//               <p className="text-sm text-muted mt-1">
+//                 Try adjusting your search or clearing filters.
+//               </p>
+//             </div>
+//           ) : (
+//             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+//               {filtered.map((job) => (
+//                 <JobCard key={job.id} job={job} />
+//               ))}
+//             </div>
+//           )}
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
 "use client";
 
 import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Search, MapPin, SlidersHorizontal } from "lucide-react";
 import JobCard from "@/components/JobCard";
-import type { Job } from "@/lib/mockData";
 import type { ApiCategory } from "@/lib/api";
 
-// backend currently supports/Expect these 5 job types (no ON_SITE)
+// 1. IMPORT FIX: Import the standard Job type instead of FrontendJob
+import type { Job } from "@/lib/mockData";
+
 const jobTypes = ["Full Time", "Part Time", "Remote", "Hybrid", "Contract"];
 
 type Props = {
+  // 2. TYPE FIX: Change FrontendJob[] to Job[]
   initialJobs: Job[];
   categories: ApiCategory[];
 };
@@ -23,50 +217,26 @@ export default function JobsListing({ initialJobs, categories }: Props) {
   const [category, setCategory] = useState(searchParams.get("category") ?? "");
   const [type, setType] = useState<string>("");
 
-  // const filtered = useMemo(() => {
-  //   return initialJobs.filter((job) => {
-  //     const matchesQuery =
-  //       !query ||
-  //       job.title.toLowerCase().includes(query.toLowerCase()) ||
-  //       job.company.toLowerCase().includes(query.toLowerCase());
-  //     const matchesLocation =
-  //       !location ||
-  //       job.location.toLowerCase().includes(location.toLowerCase());
-  //     const matchesCategory = !category || job.category === category;
-  //     const matchesType = !type || job.type === type;
-  //     return matchesQuery && matchesLocation && matchesCategory && matchesType;
-  //   });
-  // }, [initialJobs, query, location, category, type]);
   const filtered = useMemo(() => {
-    return initialJobs.filter((job: any) => {
-      // 1. Safely extract the company name whether it's an object from the API or a string
-      const companyName =
-        typeof job.company === "object"
-          ? job.company?.name
-          : job.company || job.companyName || "";
-
-      // Match query against title and company name
+    return initialJobs.filter((job) => {
+      // 1. Evaluate Text Search queries safely
       const matchesQuery =
         !query ||
         job.title?.toLowerCase().includes(query.toLowerCase()) ||
-        companyName?.toLowerCase().includes(query.toLowerCase());
+        job.company?.toLowerCase().includes(query.toLowerCase());
 
-      // 2. Match location safely
+      // 2. Evaluate Regional parameters safely
       const matchesLocation =
         !location ||
         job.location?.toLowerCase().includes(location.toLowerCase());
 
-      // 3. Match Category (compare the UI category ID to the database categoryId)
-      const jobCategoryId = job.categoryId || job.category?.id || job.category;
-      const matchesCategory = !category || jobCategoryId === category;
+      // 3. Evaluate Database relational keys accurately
+      const matchesCategory = !category || job.category === category;
 
-      // 4. Match Job Type (Convert UI "Full Time" -> DB "FULL_TIME")
-      const formattedFilterType = type
-        ? type.toUpperCase().replace(" ", "_")
-        : "";
-      const matchesType = !type || job.type === formattedFilterType;
+      // 4. Evaluate Normalized string values accurately
+      const matchesType =
+        !type || job.type.toLowerCase() === type.toLowerCase();
 
-      // Return true only if all active filters match
       return matchesQuery && matchesLocation && matchesCategory && matchesType;
     });
   }, [initialJobs, query, location, category, type]);
@@ -74,12 +244,13 @@ export default function JobsListing({ initialJobs, categories }: Props) {
   return (
     <div className="container-page py-10">
       <div className="mb-6">
-        <h1 className="text-pageH1">
+        <h1 className="text-xl font-bold text-ink">
           Search verified jobs from trusted employers.
         </h1>
         <p className="text-muted text-sm mt-2">{filtered.length} jobs found</p>
       </div>
 
+      {/* Control Filter Bar Input Fields */}
       <div className="bg-white rounded-2xl border border-border p-2 flex flex-col sm:flex-row gap-2 mb-8">
         <div className="flex items-center flex-1 gap-2 px-3 py-2.5 rounded-xl">
           <Search className="h-4 w-4 text-muted shrink-0" />
@@ -103,6 +274,7 @@ export default function JobsListing({ initialJobs, categories }: Props) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-8">
+        {/* Sidebar Filters */}
         <aside className="space-y-6">
           <div className="rounded-xl border border-border bg-white p-5">
             <h3 className="flex items-center gap-2 text-sm font-semibold text-ink mb-4">
@@ -130,9 +302,6 @@ export default function JobsListing({ initialJobs, categories }: Props) {
                   }`}
                 >
                   <span>{cat.label}</span>
-                  {typeof cat.count === "number" && (
-                    <span className="text-xs">{cat.count}</span>
-                  )}
                 </button>
               ))}
             </div>
@@ -168,6 +337,7 @@ export default function JobsListing({ initialJobs, categories }: Props) {
           </div>
         </aside>
 
+        {/* Core Content Listing Area */}
         <div>
           {filtered.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border bg-white p-12 text-center">
@@ -175,7 +345,7 @@ export default function JobsListing({ initialJobs, categories }: Props) {
                 No jobs match your filters
               </p>
               <p className="text-sm text-muted mt-1">
-                Try adjusting your search or clearing filters.
+                Try adjusting your search parameters or clearing selections.
               </p>
             </div>
           ) : (
