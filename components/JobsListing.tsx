@@ -39,11 +39,14 @@ export default function JobsListing({ initialJobs, categories }: Props) {
         job.location?.toLowerCase().includes(location.toLowerCase());
 
       // 3. Evaluate Database relational keys accurately
+      // const matchesCategory = !category || job.category === category;
       const matchesCategory = !category || job.category === category;
 
       // 4. Evaluate Normalized string values accurately
-      const matchesType =
-        !type || job.type.toLowerCase() === type.toLowerCase();
+
+      // const matchesType =
+      //   !type || job.type.toLowerCase() === type.toLowerCase();
+      const matchesType = !type || job.type === type;
 
       return matchesQuery && matchesLocation && matchesCategory && matchesType;
     });

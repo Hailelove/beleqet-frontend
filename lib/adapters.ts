@@ -1,6 +1,18 @@
-
 import type { Job } from "./mockData";
 import type { ApiJob } from "./api";
+
+// 1. Create a mapping object to bridge the database and your UI
+const typeMap: Record<
+  string,
+  "Full Time" | "Part Time" | "Remote" | "Hybrid" | "Contract" | "On-site"
+> = {
+  FULL_TIME: "Full Time",
+  PART_TIME: "Part Time",
+  REMOTE: "Remote",
+  HYBRID: "Hybrid",
+  CONTRACT: "Contract",
+  ON_SITE: "On-site",
+};
 
 function timeAgo(dateStr: string) {
   if (!dateStr) return "recently";
@@ -34,19 +46,32 @@ export function adaptJob(apiJob: any): Job {
   // We preserve the uppercase string format so it satisfies the component filter condition:
   // job.type === type.toUpperCase().replace(" ", "_")
   const rawType = apiJob.jobType ?? apiJob.type ?? "FULL_TIME";
+  const normalizedType = typeMap[rawType] ?? "Full Time";
 
+  // return {
+  // id: apiJob.id,
+  // title: apiJob.title,
+  // // 3. Resolve Company structures safely
+  // company: apiJob.company?.name ?? apiJob.companyName ?? "Unknown Company",
+  // location: apiJob.location,
+  // type: rawType,
+  // category: apiJob.categoryId ?? apiJob.category,
+  // postedAgo: timeAgo(apiJob.createdAt),
+  // description: apiJob.description,
+  // tags: tagsArray,
+  // // 4. Ensure structural compatibility with your exact client-side filter hooks
+  // categoryId: apiJob.categoryId,
+  // } as unknown as Job;
   return {
     id: apiJob.id,
     title: apiJob.title,
-    // 3. Resolve Company structures safely
     company: apiJob.company?.name ?? apiJob.companyName ?? "Unknown Company",
     location: apiJob.location,
-    type: rawType,
+    type: normalizedType, // Use the mapped, human-readable string
     category: apiJob.categoryId ?? apiJob.category,
     postedAgo: timeAgo(apiJob.createdAt),
     description: apiJob.description,
     tags: tagsArray,
-    // 4. Ensure structural compatibility with your exact client-side filter hooks
     categoryId: apiJob.categoryId,
-  } as unknown as Job;
+  } as Job;
 }
