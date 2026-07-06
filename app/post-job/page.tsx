@@ -47,6 +47,10 @@ export default function PostJobPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
+  // New state for inline messages instead of alerts
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
   const [formData, setFormData] = useState({
     title: "",
     company: "",
@@ -59,8 +63,18 @@ export default function PostJobPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
+    setSuccess(null);
 
+    // Retrieve the token. Verify this key matches what your login function uses!
     const token = localStorage.getItem("accessToken");
+
+    // Prevent network request if token is completely missing
+    if (!token) {
+      setError("You are not logged in. Please log in to post a job.");
+      setLoading(false);
+      return;
+    }
 
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/jobs`, {
@@ -73,14 +87,28 @@ export default function PostJobPage() {
       });
 
       if (response.ok) {
-        alert("Job posted successfully!");
-        router.push("/jobs");
+        setSuccess("Job posted successfully! Redirecting...");
+        // Wait 2 seconds so the user can read the success message, then redirect
+        setTimeout(() => {
+          router.push("/jobs");
+        }, 2000);
       } else {
         const errorData = await response.json();
-        alert(`Error: ${errorData.message}`);
+
+        // Handle specific 401 Unauthorized errors gracefully
+        if (response.status === 401) {
+          setError("Session expired or unauthorized. Please log in again.");
+        } else {
+          // Display the specific validation error from NestJS
+          setError(
+            errorData.message ||
+              "Failed to post job. Please check your inputs.",
+          );
+        }
       }
-    } catch (error) {
-      console.error("Failed to post job:", error);
+    } catch (err) {
+      console.error("Failed to post job:", err);
+      setError("Network error. Please ensure the backend is running.");
     } finally {
       setLoading(false);
     }
@@ -96,8 +124,20 @@ export default function PostJobPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="mt-8 rounded-2xl border border-border bg-white p-7 space-y-6"
+        className="mt-8 rounded-2xl border border-border bg-white p-7 space-y-6 shadow-sm"
       >
+        {/* Inline Feedback Messages */}
+        {error && (
+          <div className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg">
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="p-3 text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg">
+            {success}
+          </div>
+        )}
+
         {/* Job Title */}
         <div>
           <label htmlFor="jobTitle" className="text-xs font-semibold text-ink">
