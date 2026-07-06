@@ -1,3 +1,43 @@
+// "use client";
+
+// export default function PostJobPage() {
+//   return (
+//     <div className="container-page py-16 max-w-2xl">
+//       <h1 className="text-pageH1">Post a Job</h1>
+//       <p className="text-muted mt-4 leading-relaxed">
+//         Reach thousands of verified job seekers across Ethiopia. Fill out the form below to publish your listing —
+//         wire this up to your job-creation API to go live.
+//       </p>
+
+//       <form
+//         onSubmit={(e) => e.preventDefault()}
+//         className="mt-8 rounded-2xl border border-border bg-white p-7 space-y-4"
+//       >
+//         <div>
+//           <label className="text-xs font-semibold text-ink">Job Title</label>
+//           <input className="mt-1.5 w-full rounded-lg border border-border px-3 py-2.5 text-sm outline-none focus:border-brandGreen" />
+//         </div>
+//         <div className="grid grid-cols-2 gap-4">
+//           <div>
+//             <label className="text-xs font-semibold text-ink">Company</label>
+//             <input className="mt-1.5 w-full rounded-lg border border-border px-3 py-2.5 text-sm outline-none focus:border-brandGreen" />
+//           </div>
+//           <div>
+//             <label className="text-xs font-semibold text-ink">Location</label>
+//             <input className="mt-1.5 w-full rounded-lg border border-border px-3 py-2.5 text-sm outline-none focus:border-brandGreen" />
+//           </div>
+//         </div>
+//         <div>
+//           <label className="text-xs font-semibold text-ink">Job Description</label>
+//           <textarea rows={5} className="mt-1.5 w-full rounded-lg border border-border px-3 py-2.5 text-sm outline-none focus:border-brandGreen" />
+//         </div>
+//         <button type="submit" className="w-full rounded-full bg-brandGreen text-white text-sm font-semibold py-3 hover:bg-darkGreen transition-colors">
+//           Publish Listing
+//         </button>
+//       </form>
+//     </div>
+//   );
+// }
 "use client";
 
 import { useState } from "react";
@@ -7,13 +47,12 @@ export default function PostJobPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  // 1. Centralized state for all form fields
   const [formData, setFormData] = useState({
     title: "",
     company: "",
     location: "",
     categoryId: "",
-    type: "FULL_TIME", // Default to FULL_TIME
+    type: "FULL_TIME",
     description: "",
   });
 
@@ -21,7 +60,6 @@ export default function PostJobPage() {
     e.preventDefault();
     setLoading(true);
 
-    // Retrieve the token (adjust this based on where you store it)
     const token = localStorage.getItem("accessToken");
 
     try {
@@ -29,7 +67,7 @@ export default function PostJobPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // Sends the secure token to Render
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(formData),
       });
@@ -39,7 +77,7 @@ export default function PostJobPage() {
         router.push("/jobs");
       } else {
         const errorData = await response.json();
-        alert(`Error: ${errorData.message}`); // Displays backend validation errors
+        alert(`Error: ${errorData.message}`);
       }
     } catch (error) {
       console.error("Failed to post job:", error);
@@ -62,8 +100,12 @@ export default function PostJobPage() {
       >
         {/* Job Title */}
         <div>
-          <label className="text-xs font-semibold text-ink">Job Title</label>
+          <label htmlFor="jobTitle" className="text-xs font-semibold text-ink">
+            Job Title
+          </label>
           <input
+            id="jobTitle"
+            name="title"
             required
             value={formData.title}
             onChange={(e) =>
@@ -77,8 +119,15 @@ export default function PostJobPage() {
         {/* Company and Location (Grid) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="text-xs font-semibold text-ink">Company</label>
+            <label
+              htmlFor="companyName"
+              className="text-xs font-semibold text-ink"
+            >
+              Company
+            </label>
             <input
+              id="companyName"
+              name="company"
               required
               value={formData.company}
               onChange={(e) =>
@@ -89,8 +138,15 @@ export default function PostJobPage() {
             />
           </div>
           <div>
-            <label className="text-xs font-semibold text-ink">Location</label>
+            <label
+              htmlFor="jobLocation"
+              className="text-xs font-semibold text-ink"
+            >
+              Location
+            </label>
             <input
+              id="jobLocation"
+              name="location"
               required
               value={formData.location}
               onChange={(e) =>
@@ -105,8 +161,15 @@ export default function PostJobPage() {
         {/* Category and Job Type (Grid) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="text-xs font-semibold text-ink">Category</label>
+            <label
+              htmlFor="categoryId"
+              className="text-xs font-semibold text-ink"
+            >
+              Category
+            </label>
             <select
+              id="categoryId"
+              name="categoryId"
               required
               value={formData.categoryId}
               onChange={(e) =>
@@ -117,7 +180,6 @@ export default function PostJobPage() {
               <option value="" disabled>
                 Select a Category
               </option>
-              {/* Replace these with real category IDs from your database later */}
               <option value="software-design-and-development">
                 Software Development
               </option>
@@ -128,8 +190,12 @@ export default function PostJobPage() {
             </select>
           </div>
           <div>
-            <label className="text-xs font-semibold text-ink">Job Type</label>
+            <label htmlFor="jobType" className="text-xs font-semibold text-ink">
+              Job Type
+            </label>
             <select
+              id="jobType"
+              name="type"
               required
               value={formData.type}
               onChange={(e) =>
@@ -148,10 +214,15 @@ export default function PostJobPage() {
 
         {/* Job Description */}
         <div>
-          <label className="text-xs font-semibold text-ink">
+          <label
+            htmlFor="jobDescription"
+            className="text-xs font-semibold text-ink"
+          >
             Job Description
           </label>
           <textarea
+            id="jobDescription"
+            name="description"
             required
             rows={5}
             value={formData.description}
