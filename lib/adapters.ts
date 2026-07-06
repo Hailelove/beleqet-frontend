@@ -41,27 +41,11 @@ export function adaptJob(apiJob: any): Job {
     }
   }
 
-  // 2. Resolve the property mismatch for Job Types
-  // Backend provides 'jobType' (e.g., 'FULL_TIME').
-  // We preserve the uppercase string format so it satisfies the component filter condition:
-  // job.type === type.toUpperCase().replace(" ", "_")
+  
   const rawType = apiJob.jobType ?? apiJob.type ?? "FULL_TIME";
   const normalizedType = typeMap[rawType] ?? "Full Time";
 
-  // return {
-  // id: apiJob.id,
-  // title: apiJob.title,
-  // // 3. Resolve Company structures safely
-  // company: apiJob.company?.name ?? apiJob.companyName ?? "Unknown Company",
-  // location: apiJob.location,
-  // type: rawType,
-  // category: apiJob.categoryId ?? apiJob.category,
-  // postedAgo: timeAgo(apiJob.createdAt),
-  // description: apiJob.description,
-  // tags: tagsArray,
-  // // 4. Ensure structural compatibility with your exact client-side filter hooks
-  // categoryId: apiJob.categoryId,
-  // } as unknown as Job;
+  
   return {
     id: apiJob.id,
     title: apiJob.title,
